@@ -394,6 +394,141 @@
 
     .study-area.hidden { display: none; }
 
+    /* 开始菜单 */
+    #menuScreen {
+      position: relative;
+      z-index: 2;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 20px;
+    }
+    #menuScreen.hidden { display: none; }
+
+    .menu-panel {
+      position: relative;
+      width: 100%;
+      max-width: 520px;
+      padding: 48px 36px 40px;
+      border-radius: 24px;
+      text-align: center;
+      background: var(--glass-bg);
+      backdrop-filter: blur(var(--glass-blur));
+      -webkit-backdrop-filter: blur(var(--glass-blur));
+      border: 1px solid var(--glass-border);
+      box-shadow:
+        0 12px 48px rgba(0, 0, 0, 0.45),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      overflow: visible;
+    }
+    .menu-panel::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 24px;
+      padding: 1px;
+      background: linear-gradient(135deg, rgba(0,212,255,0.4), transparent 45%, rgba(168,85,247,0.4));
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+    }
+
+    .menu-title {
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 8px;
+    }
+    .menu-subtitle {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      margin-bottom: 28px;
+    }
+    .menu-desc {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      line-height: 1.8;
+      margin-bottom: 32px;
+    }
+    .menu-features {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 36px;
+    }
+    .menu-feature {
+      padding: 8px 14px;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      background: rgba(0, 212, 255, 0.08);
+      border: 1px solid rgba(0, 212, 255, 0.2);
+      color: var(--accent-cyan);
+    }
+
+    .btn-start {
+      padding: 16px 48px;
+      border: none;
+      border-radius: 14px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      cursor: pointer;
+      color: #0a0e17;
+      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+      box-shadow: 0 0 28px rgba(0, 212, 255, 0.35);
+      transition: all 0.3s ease;
+      position: relative;
+      z-index: 2;
+    }
+    .btn-start:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 40px rgba(0, 212, 255, 0.5);
+    }
+    .btn-start:active { transform: scale(0.97); }
+
+    .menu-hint {
+      margin-top: 20px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      opacity: 0.6;
+    }
+
+    /* 菜单面板上的装饰小怪物 */
+    .menu-monster-slot {
+      position: absolute;
+      pointer-events: auto;
+      cursor: crosshair;
+      z-index: 3;
+      image-rendering: pixelated;
+      filter: drop-shadow(0 0 10px rgba(0, 212, 255, 0.4));
+      transition: filter 0.15s ease;
+      animation: menuMonsterBob 2.5s ease-in-out infinite;
+    }
+    .menu-monster-slot:hover {
+      filter: drop-shadow(0 0 16px rgba(168, 85, 247, 0.8)) brightness(1.2);
+    }
+    .menu-monster-slot.slot-tl { top: -18px; left: -18px; animation-delay: 0s; }
+    .menu-monster-slot.slot-tr { top: -18px; right: -18px; animation-delay: 0.6s; }
+    .menu-monster-slot.slot-bl { bottom: -18px; left: -18px; animation-delay: 1.2s; }
+    .menu-monster-slot.slot-br { bottom: -18px; right: -18px; animation-delay: 1.8s; }
+
+    @keyframes menuMonsterBob {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+
+    #appContent.hidden { display: none; }
+
     /* 装饰线条 */
     .scan-line {
       position: fixed;
@@ -449,7 +584,8 @@
     }
 
     @media (max-width: 900px) {
-      #monsterLayer, #fxCanvas { display: none; }
+      #monsterLayer { display: none; }
+      .menu-monster-slot { display: none; }
     }
 
     @media (max-width: 480px) {
@@ -467,13 +603,37 @@
   <canvas id="fxCanvas"></canvas>
   <div id="monsterLayer"></div>
 
-  <div class="container">
+  <!-- 开始菜单 -->
+  <div id="menuScreen">
+    <div class="menu-panel" id="menuPanel">
+      <div class="menu-monster-slot slot-tl" data-slot="tl"></div>
+      <div class="menu-monster-slot slot-tr" data-slot="tr"></div>
+      <div class="menu-monster-slot slot-bl" data-slot="bl"></div>
+      <div class="menu-monster-slot slot-br" data-slot="br"></div>
+
+      <h1 class="menu-title">IELTS FLASHCARDS</h1>
+      <p class="menu-subtitle">雅思背词辅助器</p>
+      <p class="menu-desc">
+        内置 20 个雅思高频词汇<br>
+        翻转卡片 · 乱序速记 · 薄弱词回顾
+      </p>
+      <div class="menu-features">
+        <span class="menu-feature">毛玻璃卡片</span>
+        <span class="menu-feature">像素小怪物</span>
+        <span class="menu-feature">一键回顾</span>
+      </div>
+      <button class="btn-start" id="btnStart">开始速记</button>
+      <p class="menu-hint">点击游荡的小怪物，看像素爆炸特效</p>
+    </div>
+  </div>
+
+  <div class="container hidden" id="appContent">
     <header>
       <h1>IELTS FLASHCARDS</h1>
       <p>雅思背词辅助器</p>
     </header>
 
-    <div class="study-area" id="studyArea">
+    <div class="study-area hidden" id="studyArea">
       <div class="progress-bar-wrap">
         <div class="progress-info">
           <span id="progressLabel">第 1 / 20 词</span>
@@ -517,6 +677,7 @@
         <button class="btn-tool" id="btnShuffle">乱序排列</button>
         <button class="btn-tool" id="btnReview" disabled>回顾不认识 (0)</button>
         <button class="btn-tool" id="btnReset">重置全部</button>
+        <button class="btn-tool" id="btnBackMenu">返回菜单</button>
       </div>
     </div>
 
@@ -536,6 +697,7 @@
       <div class="toolbar" style="margin-top: 0">
         <button class="btn-tool" id="btnReviewFinish">回顾不认识单词</button>
         <button class="btn-tool" id="btnRestart">重新开始</button>
+        <button class="btn-tool" id="btnBackMenuFinish">返回菜单</button>
       </div>
     </div>
   </div>
@@ -577,11 +739,13 @@
 
     // 应用状态
     const state = {
-      queue: [],          // 当前背诵队列（索引数组）
-      currentIdx: 0,      // 在 queue 中的位置
-      statuses: {},       // word索引 -> 'known' | 'unknown' | null
-      reviewMode: false,    // 是否处于「回顾不认识」模式
-      isFlipped: false
+      screen: "menu",     // 'menu' | 'study'
+      queue: [],
+      currentIdx: 0,
+      statuses: {},
+      reviewMode: false,
+      isFlipped: false,
+      studyStarted: false
     };
 
     // DOM 引用
@@ -590,6 +754,9 @@
     const cardScene = $("cardScene");
     const studyArea = $("studyArea");
     const finishPanel = $("finishPanel");
+    const menuScreen = $("menuScreen");
+    const appContent = $("appContent");
+    const menuPanel = $("menuPanel");
 
     function initStatuses() {
       state.statuses = {};
@@ -714,6 +881,31 @@
       renderCard();
     }
 
+    function enterStudy() {
+      state.screen = "study";
+      state.studyStarted = true;
+      menuScreen.classList.add("hidden");
+      appContent.classList.remove("hidden");
+      studyArea.classList.remove("hidden");
+      finishPanel.classList.remove("show");
+      initStatuses();
+      buildQueue(shuffle(WORDS.map((_, i) => i)));
+      renderCard();
+      setMonsterMode("study");
+    }
+
+    function backToMenu() {
+      state.screen = "menu";
+      state.reviewMode = false;
+      state.isFlipped = false;
+      card.classList.remove("flipped");
+      menuScreen.classList.remove("hidden");
+      appContent.classList.add("hidden");
+      studyArea.classList.add("hidden");
+      finishPanel.classList.remove("show");
+      setMonsterMode("menu");
+    }
+
     // 事件绑定
     $("btnFlip").addEventListener("click", (e) => { e.stopPropagation(); flipCard(); });
     cardScene.addEventListener("click", flipCard);
@@ -724,9 +916,13 @@
     $("btnReset").addEventListener("click", resetAll);
     $("btnReviewFinish").addEventListener("click", startReview);
     $("btnRestart").addEventListener("click", shuffleAndRestart);
+    $("btnStart").addEventListener("click", enterStudy);
+    $("btnBackMenu").addEventListener("click", backToMenu);
+    $("btnBackMenuFinish").addEventListener("click", backToMenu);
 
-    // 键盘快捷键
+    // 键盘快捷键（仅背词界面生效）
     document.addEventListener("keydown", (e) => {
+      if (state.screen !== "study") return;
       if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
       switch (e.key) {
         case " ": case "f": case "F": e.preventDefault(); flipCard(); break;
@@ -734,11 +930,6 @@
         case "ArrowLeft": case "u": case "U": markWord("unknown"); break;
       }
     });
-
-    // 初始化
-    initStatuses();
-    buildQueue(WORDS.map((_, i) => i));
-    renderCard();
 
     /* ========== 小怪物 & 像素爆炸 ========== */
 
@@ -821,8 +1012,11 @@
     ];
 
     const monsters = [];
+    const menuSlotMonsters = [];
     let particles = [];
     let spawnTimer = 0;
+    let monsterMode = "menu";
+    let monsterLoopStarted = false;
     const PIXEL = 4;
     const MONSTER_SIZE = 8 * PIXEL;
 
@@ -833,8 +1027,8 @@
     resizeFxCanvas();
     window.addEventListener("resize", resizeFxCanvas);
 
-    // 计算左右两侧可活动区域（避开中间背词区）
-    function getSideZones() {
+    // 背词模式：左右两侧活动区
+    function getStudyZones() {
       const contentW = Math.min(720, window.innerWidth - 40);
       const margin = (window.innerWidth - contentW) / 2;
       if (margin < 70) return null;
@@ -843,6 +1037,33 @@
         left:  { x: pad, y: pad, w: margin - pad * 2, h: window.innerHeight - pad * 2 },
         right: { x: window.innerWidth - margin + pad, y: pad, w: margin - pad * 2, h: window.innerHeight - pad * 2 }
       };
+    }
+
+    // 菜单模式：全屏游荡（避开中央菜单面板）
+    function getMenuZones() {
+      const pad = 16;
+      const panel = menuPanel.getBoundingClientRect();
+      const gap = 24;
+      const zones = {};
+
+      if (panel.left > pad + MONSTER_SIZE + gap) {
+        zones.left = { x: pad, y: pad, w: panel.left - pad - gap, h: window.innerHeight - pad * 2 };
+      }
+      if (window.innerWidth - panel.right > pad + MONSTER_SIZE + gap) {
+        zones.right = { x: panel.right + gap, y: pad, w: window.innerWidth - panel.right - pad - gap, h: window.innerHeight - pad * 2 };
+      }
+      if (panel.top > pad + MONSTER_SIZE + gap) {
+        zones.top = { x: pad, y: pad, w: window.innerWidth - pad * 2, h: panel.top - pad - gap };
+      }
+      if (window.innerHeight - panel.bottom > pad + MONSTER_SIZE + gap) {
+        zones.bottom = { x: pad, y: panel.bottom + gap, w: window.innerWidth - pad * 2, h: window.innerHeight - panel.bottom - pad - gap };
+      }
+
+      return Object.keys(zones).length ? zones : null;
+    }
+
+    function getActiveZones() {
+      return monsterMode === "menu" ? getMenuZones() : getStudyZones();
     }
 
     function drawSpriteToCanvas(sprite, scale) {
@@ -862,9 +1083,42 @@
       return c;
     }
 
+    function clearWanderingMonsters() {
+      monsters.forEach(m => { if (m.alive) m.el.remove(); });
+      monsters.length = 0;
+    }
+
+    function clearMenuSlotMonsters() {
+      menuSlotMonsters.forEach(m => {
+        m.el.innerHTML = "";
+        m.alive = true;
+        m.el.classList.remove("dying");
+      });
+      menuSlotMonsters.length = 0;
+    }
+
+    function spawnMenuSlotMonsters() {
+      clearMenuSlotMonsters();
+      document.querySelectorAll(".menu-monster-slot").forEach(slot => {
+        const sprite = SPRITES[Math.floor(Math.random() * SPRITES.length)];
+        const canvas = drawSpriteToCanvas(sprite, PIXEL);
+        slot.innerHTML = "";
+        slot.appendChild(canvas);
+
+        const m = { el: slot, sprite, alive: true, isSlot: true };
+        slot.onclick = (e) => {
+          e.stopPropagation();
+          if (!m.alive) return;
+          const rect = slot.getBoundingClientRect();
+          explodeMonster(m, rect.left + rect.width / 2, rect.top + rect.height / 2, true);
+        };
+        menuSlotMonsters.push(m);
+      });
+    }
+
     function createMonster(side) {
-      const zones = getSideZones();
-      if (!zones) return null;
+      const zones = getActiveZones();
+      if (!zones || !zones[side]) return null;
 
       const zone = zones[side];
       const sprite = SPRITES[Math.floor(Math.random() * SPRITES.length)];
@@ -903,10 +1157,10 @@
       return m;
     }
 
-    function explodeMonster(m, cx, cy) {
+    function explodeMonster(m, cx, cy, isSlot = false) {
       if (!m.alive) return;
       m.alive = false;
-      m.el.classList.add("dying");
+      if (!isSlot) m.el.classList.add("dying");
 
       const rect = m.el.getBoundingClientRect();
       const centerX = cx ?? rect.left + rect.width / 2;
@@ -957,11 +1211,21 @@
 
       particles.push(...cols);
 
-      setTimeout(() => m.el.remove(), 120);
-      const idx = monsters.indexOf(m);
-      if (idx >= 0) monsters.splice(idx, 1);
-
-      scheduleRespawn();
+      if (isSlot) {
+        setTimeout(() => {
+          const sprite = SPRITES[Math.floor(Math.random() * SPRITES.length)];
+          const canvas = drawSpriteToCanvas(sprite, PIXEL);
+          m.el.innerHTML = "";
+          m.el.appendChild(canvas);
+          m.sprite = sprite;
+          m.alive = true;
+        }, 900);
+      } else {
+        setTimeout(() => m.el.remove(), 120);
+        const idx = monsters.indexOf(m);
+        if (idx >= 0) monsters.splice(idx, 1);
+        scheduleRespawn();
+      }
     }
 
     let respawnPending = false;
@@ -970,34 +1234,34 @@
       respawnPending = true;
       setTimeout(() => {
         respawnPending = false;
-        if (window.innerWidth > 900) trySpawnMonster();
+        if (monsterMode !== "off") trySpawnMonster();
       }, 800 + Math.random() * 1500);
     }
 
     function trySpawnMonster() {
-      const zones = getSideZones();
+      const zones = getActiveZones();
       if (!zones) return;
 
-      const leftCount = monsters.filter(m => m.side === "left").length;
-      const rightCount = monsters.filter(m => m.side === "right").length;
-      const maxPerSide = 3;
-
+      const maxPerZone = monsterMode === "menu" ? 2 : 3;
       const candidates = [];
-      if (leftCount < maxPerSide) candidates.push("left");
-      if (rightCount < maxPerSide) candidates.push("right");
+
+      Object.keys(zones).forEach(side => {
+        const count = monsters.filter(m => m.side === side).length;
+        if (count < maxPerZone) candidates.push(side);
+      });
       if (candidates.length === 0) return;
 
-      const side = candidates[Math.floor(Math.random() * candidates.length)];
-      createMonster(side);
+      createMonster(candidates[Math.floor(Math.random() * candidates.length)]);
     }
 
     function updateMonsters(now) {
-      const zones = getSideZones();
+      const zones = getActiveZones();
       if (!zones) return;
 
       monsters.forEach(m => {
         if (!m.alive) return;
         const zone = zones[m.side];
+        if (!zone) return;
 
         if (now > m.nextTurn) {
           m.nextTurn = now + 1200 + Math.random() * 2800;
@@ -1047,24 +1311,45 @@
     }
 
     function monsterLoop(now) {
-      spawnTimer += 16;
-      if (spawnTimer > 2200) {
-        spawnTimer = 0;
-        trySpawnMonster();
+      if (monsterMode !== "off") {
+        spawnTimer += 16;
+        if (spawnTimer > (monsterMode === "menu" ? 1800 : 2200)) {
+          spawnTimer = 0;
+          trySpawnMonster();
+        }
+        updateMonsters(now);
       }
-      updateMonsters(now);
       updateParticles();
       requestAnimationFrame(monsterLoop);
     }
 
-    function initMonsters() {
-      if (window.innerWidth <= 900) return;
-      createMonster("left");
-      createMonster("right");
-      setTimeout(() => createMonster(Math.random() > 0.5 ? "left" : "right"), 600);
+    function setMonsterMode(mode) {
+      monsterMode = mode;
+      clearWanderingMonsters();
+      spawnTimer = 0;
+
+      if (mode === "menu") {
+        spawnMenuSlotMonsters();
+        if (window.innerWidth > 900) {
+          const zones = getMenuZones();
+          if (zones) {
+            Object.keys(zones).slice(0, 2).forEach(side => createMonster(side));
+          }
+        }
+      } else if (mode === "study") {
+        clearMenuSlotMonsters();
+        if (window.innerWidth > 900) {
+          createMonster("left");
+          createMonster("right");
+        }
+      }
+    }
+
+    if (!monsterLoopStarted) {
+      monsterLoopStarted = true;
       requestAnimationFrame(monsterLoop);
     }
-    initMonsters();
+    setMonsterMode("menu");
   </script>
 </body>
 </html>
