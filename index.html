@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>雅思背词 · IELTS Flashcards</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-deep: #0a0e17;
+      --bg-mid: #111827;
+      --accent-cyan: #00d4ff;
+      --accent-purple: #a855f7;
+      --accent-green: #10b981;
+      --accent-red: #ef4444;
+      --text-primary: #e2e8f0;
+      --text-muted: #94a3b8;
+      --glass-bg: rgba(255, 255, 255, 0.06);
+      --glass-border: rgba(255, 255, 255, 0.12);
+      --glass-blur: 20px;
+    }
+
+    body {
+      min-height: 100vh;
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: var(--bg-deep);
+      color: var(--text-primary);
+      overflow-x: hidden;
+    }
+
+    /* 科技风背景网格 */
+    .bg-grid {
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .bg-glow {
+      position: fixed;
+      width: 600px;
+      height: 600px;
+      border-radius: 50%;
+      filter: blur(120px);
+      opacity: 0.35;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .bg-glow-1 { top: -200px; left: -100px; background: var(--accent-cyan); }
+    .bg-glow-2 { bottom: -200px; right: -100px; background: var(--accent-purple); }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 32px 20px 48px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* 标题 */
+    header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    header h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    header p {
+      margin-top: 6px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
+
+    /* 进度条 */
+    .progress-bar-wrap {
+      width: 100%;
+      margin-bottom: 24px;
+    }
+    .progress-info {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+    .progress-track {
+      height: 4px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple));
+      border-radius: 2px;
+      transition: width 0.4s ease;
+      box-shadow: 0 0 12px var(--accent-cyan);
+    }
+
+    /* 统计标签 */
+    .stats {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .stat-chip {
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      background: var(--glass-bg);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid var(--glass-border);
+    }
+    .stat-chip.known { border-color: rgba(16, 185, 129, 0.4); color: var(--accent-green); }
+    .stat-chip.unknown { border-color: rgba(239, 68, 68, 0.4); color: var(--accent-red); }
+    .stat-chip.pending { border-color: rgba(0, 212, 255, 0.3); color: var(--accent-cyan); }
+
+    /* 翻转卡片容器 */
+    .card-scene {
+      width: 100%;
+      max-width: 480px;
+      height: 300px;
+      perspective: 1200px;
+      margin-bottom: 28px;
+      cursor: pointer;
+    }
+
+    .card {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.65s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .card.flipped {
+      transform: rotateY(180deg);
+    }
+
+    .card-face {
+      position: absolute;
+      inset: 0;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      border-radius: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 28px;
+      text-align: center;
+
+      /* 毛玻璃效果 */
+      background: var(--glass-bg);
+      backdrop-filter: blur(var(--glass-blur));
+      -webkit-backdrop-filter: blur(var(--glass-blur));
+      border: 1px solid var(--glass-border);
+      box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+
+    .card-face::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 20px;
+      padding: 1px;
+      background: linear-gradient(135deg, rgba(0,212,255,0.3), transparent 40%, rgba(168,85,247,0.3));
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+    }
+
+    .card-back {
+      transform: rotateY(180deg);
+    }
+
+    .card-label {
+      position: absolute;
+      top: 16px;
+      left: 20px;
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--accent-cyan);
+      opacity: 0.7;
+    }
+
+    .word-text {
+      font-size: 2.4rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      margin-bottom: 8px;
+      text-shadow: 0 0 30px rgba(0, 212, 255, 0.3);
+    }
+
+    .phonetic {
+      font-size: 1rem;
+      color: var(--text-muted);
+      font-style: italic;
+      margin-bottom: 16px;
+    }
+
+    .meaning-text {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--accent-cyan);
+      margin-bottom: 12px;
+    }
+
+    .example-text {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+      max-width: 90%;
+    }
+
+    .hint-text {
+      position: absolute;
+      bottom: 16px;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      opacity: 0.5;
+    }
+
+    /* 按钮组 */
+    .btn-group {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+      width: 100%;
+      margin-bottom: 16px;
+    }
+
+    .btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      letter-spacing: 0.04em;
+      position: relative;
+      overflow: hidden;
+    }
+    .btn::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent);
+      opacity: 0;
+      transition: opacity 0.25s;
+    }
+    .btn:hover::after { opacity: 1; }
+    .btn:active { transform: scale(0.96); }
+
+    .btn-flip {
+      background: linear-gradient(135deg, rgba(0,212,255,0.2), rgba(168,85,247,0.2));
+      color: var(--accent-cyan);
+      border: 1px solid rgba(0, 212, 255, 0.35);
+      flex: 1;
+      min-width: 120px;
+    }
+    .btn-flip:hover {
+      box-shadow: 0 0 20px rgba(0, 212, 255, 0.25);
+    }
+
+    .btn-know {
+      background: linear-gradient(135deg, rgba(16,185,129,0.25), rgba(16,185,129,0.1));
+      color: var(--accent-green);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      flex: 1;
+      min-width: 100px;
+    }
+    .btn-know:hover {
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.25);
+    }
+
+    .btn-unknown {
+      background: linear-gradient(135deg, rgba(239,68,68,0.25), rgba(239,68,68,0.1));
+      color: var(--accent-red);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      flex: 1;
+      min-width: 100px;
+    }
+    .btn-unknown:hover {
+      box-shadow: 0 0 20px rgba(239, 68, 68, 0.25);
+    }
+
+    /* 工具栏 */
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+      width: 100%;
+      margin-top: 8px;
+    }
+
+    .btn-tool {
+      padding: 9px 18px;
+      border-radius: 10px;
+      font-size: 0.82rem;
+      font-weight: 500;
+      cursor: pointer;
+      background: var(--glass-bg);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid var(--glass-border);
+      color: var(--text-muted);
+      transition: all 0.25s ease;
+    }
+    .btn-tool:hover {
+      color: var(--text-primary);
+      border-color: rgba(0, 212, 255, 0.3);
+    }
+    .btn-tool.active {
+      color: var(--accent-cyan);
+      border-color: rgba(0, 212, 255, 0.5);
+      box-shadow: 0 0 16px rgba(0, 212, 255, 0.15);
+    }
+    .btn-tool:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    /* 完成面板 */
+    .finish-panel {
+      display: none;
+      width: 100%;
+      max-width: 480px;
+      padding: 36px 28px;
+      border-radius: 20px;
+      text-align: center;
+      background: var(--glass-bg);
+      backdrop-filter: blur(var(--glass-blur));
+      -webkit-backdrop-filter: blur(var(--glass-blur));
+      border: 1px solid var(--glass-border);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    }
+    .finish-panel.show { display: block; }
+    .finish-panel h2 {
+      font-size: 1.4rem;
+      margin-bottom: 12px;
+      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .finish-panel p {
+      color: var(--text-muted);
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+    .finish-stats {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+    .finish-stat-num {
+      font-size: 2rem;
+      font-weight: 700;
+    }
+    .finish-stat-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .study-area.hidden { display: none; }
+
+    /* 装饰线条 */
+    .scan-line {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent-cyan), transparent);
+      opacity: 0.15;
+      animation: scan 6s linear infinite;
+      pointer-events: none;
+      z-index: 2;
+    }
+    @keyframes scan {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(100vh); }
+    }
+
+    /* 小怪物层 & 像素爆炸画布 */
+    #fxCanvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 4;
+    }
+
+    #monsterLayer {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 3;
+      overflow: hidden;
+    }
+
+    .pixel-monster {
+      position: absolute;
+      pointer-events: auto;
+      cursor: crosshair;
+      transition: filter 0.15s ease;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.35));
+    }
+    .pixel-monster:hover {
+      filter: drop-shadow(0 0 14px rgba(168, 85, 247, 0.7)) brightness(1.15);
+    }
+    .pixel-monster.dying {
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.1s;
+    }
+
+    @media (max-width: 900px) {
+      #monsterLayer, #fxCanvas { display: none; }
+    }
+
+    @media (max-width: 480px) {
+      .word-text { font-size: 1.8rem; }
+      .card-scene { height: 260px; }
+      .btn { padding: 10px 16px; font-size: 0.88rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-grid"></div>
+  <div class="bg-glow bg-glow-1"></div>
+  <div class="bg-glow bg-glow-2"></div>
+  <div class="scan-line"></div>
+  <canvas id="fxCanvas"></canvas>
+  <div id="monsterLayer"></div>
+
+  <div class="container">
+    <header>
+      <h1>IELTS FLASHCARDS</h1>
+      <p>雅思背词辅助器</p>
+    </header>
+
+    <div class="study-area" id="studyArea">
+      <div class="progress-bar-wrap">
+        <div class="progress-info">
+          <span id="progressLabel">第 1 / 20 词</span>
+          <span id="modeLabel">顺序模式</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="progressFill" style="width: 5%"></div>
+        </div>
+      </div>
+
+      <div class="stats">
+        <span class="stat-chip known" id="statKnown">认识 0</span>
+        <span class="stat-chip unknown" id="statUnknown">不认识 0</span>
+        <span class="stat-chip pending" id="statPending">待背 20</span>
+      </div>
+
+      <div class="card-scene" id="cardScene">
+        <div class="card" id="card">
+          <div class="card-face card-front">
+            <span class="card-label">WORD</span>
+            <div class="word-text" id="wordFront">—</div>
+            <div class="phonetic" id="phoneticFront"></div>
+            <span class="hint-text">点击卡片或按钮翻转</span>
+          </div>
+          <div class="card-face card-back">
+            <span class="card-label">MEANING</span>
+            <div class="meaning-text" id="meaningBack">—</div>
+            <div class="example-text" id="exampleBack"></div>
+            <span class="hint-text">点击卡片或按钮翻转</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="btn-group">
+        <button class="btn btn-flip" id="btnFlip">翻转卡片</button>
+        <button class="btn btn-know" id="btnKnow">认识</button>
+        <button class="btn btn-unknown" id="btnUnknown">不认识</button>
+      </div>
+
+      <div class="toolbar">
+        <button class="btn-tool" id="btnShuffle">乱序排列</button>
+        <button class="btn-tool" id="btnReview" disabled>回顾不认识 (0)</button>
+        <button class="btn-tool" id="btnReset">重置全部</button>
+      </div>
+    </div>
+
+    <div class="finish-panel" id="finishPanel">
+      <h2>本轮背诵完成</h2>
+      <p id="finishDesc">恭喜你完成了本轮所有单词！</p>
+      <div class="finish-stats">
+        <div>
+          <div class="finish-stat-num" style="color: var(--accent-green)" id="finishKnown">0</div>
+          <div class="finish-stat-label">认识</div>
+        </div>
+        <div>
+          <div class="finish-stat-num" style="color: var(--accent-red)" id="finishUnknown">0</div>
+          <div class="finish-stat-label">不认识</div>
+        </div>
+      </div>
+      <div class="toolbar" style="margin-top: 0">
+        <button class="btn-tool" id="btnReviewFinish">回顾不认识单词</button>
+        <button class="btn-tool" id="btnRestart">重新开始</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 内置 20 个雅思高频词汇
+    const WORDS = [
+      { word: "ambiguous", phonetic: "/æmˈbɪɡjuəs/", meaning: "模糊的；含糊不清的", example: "The instructions were ambiguous and confusing." },
+      { word: "comprehensive", phonetic: "/ˌkɒmprɪˈhensɪv/", meaning: "全面的；综合的", example: "The report provides a comprehensive analysis." },
+      { word: "deteriorate", phonetic: "/dɪˈtɪəriəreɪt/", meaning: "恶化；退化", example: "His health began to deteriorate rapidly." },
+      { word: "elaborate", phonetic: "/ɪˈlæbərət/", meaning: "详尽的；精心制作的", example: "She gave an elaborate explanation of the process." },
+      { word: "facilitate", phonetic: "/fəˈsɪlɪteɪt/", meaning: "促进；使便利", example: "Technology can facilitate communication." },
+      { word: "hypothesis", phonetic: "/haɪˈpɒθəsɪs/", meaning: "假设；假说", example: "The scientist tested her hypothesis." },
+      { word: "inevitable", phonetic: "/ɪnˈevɪtəbl/", meaning: "不可避免的", example: "Change is inevitable in any organization." },
+      { word: "juxtapose", phonetic: "/ˈdʒʌkstəpəʊz/", meaning: "并列；并置", example: "The film juxtaposes past and present." },
+      { word: "legitimate", phonetic: "/lɪˈdʒɪtɪmət/", meaning: "合法的；合理的", example: "She has a legitimate reason to complain." },
+      { word: "meticulous", phonetic: "/məˈtɪkjələs/", meaning: "一丝不苟的；细致的", example: "He is meticulous about details." },
+      { word: "notwithstanding", phonetic: "/ˌnɒtwɪθˈstændɪŋ/", meaning: "尽管；虽然", example: "Notwithstanding the rain, we went out." },
+      { word: "obsolete", phonetic: "/ˈɒbsəliːt/", meaning: "过时的；废弃的", example: "This technology is now obsolete." },
+      { word: "paradigm", phonetic: "/ˈpærədaɪm/", meaning: "范式；典范", example: "A new paradigm shift is occurring." },
+      { word: "quintessential", phonetic: "/ˌkwɪntɪˈsenʃl/", meaning: "典型的；精髓的", example: "She is the quintessential professional." },
+      { word: "resilient", phonetic: "/rɪˈzɪliənt/", meaning: "有韧性的；能恢复的", example: "Children are remarkably resilient." },
+      { word: "substantiate", phonetic: "/səbˈstænʃieɪt/", meaning: "证实；证明", example: "You need evidence to substantiate your claim." },
+      { word: "tentative", phonetic: "/ˈtentətɪv/", meaning: "试探性的；暂定的", example: "We made a tentative agreement." },
+      { word: "ubiquitous", phonetic: "/juːˈbɪkwɪtəs/", meaning: "无处不在的", example: "Smartphones are ubiquitous nowadays." },
+      { word: "vulnerable", phonetic: "/ˈvʌlnərəbl/", meaning: "脆弱的；易受伤害的", example: "The elderly are vulnerable to flu." },
+      { word: "widespread", phonetic: "/ˈwaɪdspred/", meaning: "广泛的；普遍的", example: "There is widespread support for the plan." }
+    ];
+
+    // Fisher-Yates 洗牌算法：原地打乱数组顺序
+    function shuffle(arr) {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    // 应用状态
+    const state = {
+      queue: [],          // 当前背诵队列（索引数组）
+      currentIdx: 0,      // 在 queue 中的位置
+      statuses: {},       // word索引 -> 'known' | 'unknown' | null
+      reviewMode: false,    // 是否处于「回顾不认识」模式
+      isFlipped: false
+    };
+
+    // DOM 引用
+    const $ = (id) => document.getElementById(id);
+    const card = $("card");
+    const cardScene = $("cardScene");
+    const studyArea = $("studyArea");
+    const finishPanel = $("finishPanel");
+
+    function initStatuses() {
+      state.statuses = {};
+      WORDS.forEach((_, i) => { state.statuses[i] = null; });
+    }
+
+    function buildQueue(indices) {
+      state.queue = indices;
+      state.currentIdx = 0;
+      state.isFlipped = false;
+      card.classList.remove("flipped");
+    }
+
+    function getCurrentWord() {
+      if (state.currentIdx >= state.queue.length) return null;
+      return WORDS[state.queue[state.currentIdx]];
+    }
+
+    function renderCard() {
+      const w = getCurrentWord();
+      if (!w) {
+        showFinish();
+        return;
+      }
+      $("wordFront").textContent = w.word;
+      $("phoneticFront").textContent = w.phonetic;
+      $("meaningBack").textContent = w.meaning;
+      $("exampleBack").textContent = w.example;
+      updateUI();
+    }
+
+    function updateUI() {
+      const total = state.queue.length;
+      const current = state.currentIdx + 1;
+      const pct = total > 0 ? ((current / total) * 100) : 0;
+
+      $("progressLabel").textContent = `第 ${Math.min(current, total)} / ${total} 词`;
+      $("progressFill").style.width = pct + "%";
+      $("modeLabel").textContent = state.reviewMode ? "回顾模式" : "顺序模式";
+
+      let known = 0, unknown = 0, pending = 0;
+      WORDS.forEach((_, i) => {
+        const s = state.statuses[i];
+        if (s === "known") known++;
+        else if (s === "unknown") unknown++;
+        else pending++;
+      });
+
+      $("statKnown").textContent = `认识 ${known}`;
+      $("statUnknown").textContent = `不认识 ${unknown}`;
+      $("statPending").textContent = `待背 ${state.queue.length - state.currentIdx}`;
+
+      const reviewBtn = $("btnReview");
+      reviewBtn.textContent = `回顾不认识 (${unknown})`;
+      reviewBtn.disabled = unknown === 0;
+      reviewBtn.classList.toggle("active", state.reviewMode);
+    }
+
+    function flipCard() {
+      state.isFlipped = !state.isFlipped;
+      card.classList.toggle("flipped", state.isFlipped);
+    }
+
+    function markWord(status) {
+      const wordIdx = state.queue[state.currentIdx];
+      state.statuses[wordIdx] = status;
+      state.currentIdx++;
+      state.isFlipped = false;
+      card.classList.remove("flipped");
+      renderCard();
+    }
+
+    function startReview() {
+      const unknownIndices = [];
+      WORDS.forEach((_, i) => {
+        if (state.statuses[i] === "unknown") unknownIndices.push(i);
+      });
+      if (unknownIndices.length === 0) return;
+
+      state.reviewMode = true;
+      buildQueue(shuffle(unknownIndices));
+      studyArea.classList.remove("hidden");
+      finishPanel.classList.remove("show");
+      renderCard();
+    }
+
+    function showFinish() {
+      let known = 0, unknown = 0;
+      WORDS.forEach((_, i) => {
+        if (state.statuses[i] === "known") known++;
+        else if (state.statuses[i] === "unknown") unknown++;
+      });
+
+      $("finishKnown").textContent = known;
+      $("finishUnknown").textContent = unknown;
+      $("finishDesc").textContent = unknown > 0
+        ? `本轮共 ${known + unknown} 个词，有 ${unknown} 个需要回顾。`
+        : "太棒了！本轮所有单词你都认识了！";
+
+      studyArea.classList.add("hidden");
+      finishPanel.classList.add("show");
+
+      const reviewFinishBtn = $("btnReviewFinish");
+      reviewFinishBtn.style.display = unknown > 0 ? "" : "none";
+    }
+
+    function resetAll() {
+      state.reviewMode = false;
+      initStatuses();
+      buildQueue(WORDS.map((_, i) => i));
+      studyArea.classList.remove("hidden");
+      finishPanel.classList.remove("show");
+      renderCard();
+    }
+
+    function shuffleAndRestart() {
+      state.reviewMode = false;
+      initStatuses();
+      buildQueue(shuffle(WORDS.map((_, i) => i)));
+      studyArea.classList.remove("hidden");
+      finishPanel.classList.remove("show");
+      renderCard();
+    }
+
+    // 事件绑定
+    $("btnFlip").addEventListener("click", (e) => { e.stopPropagation(); flipCard(); });
+    cardScene.addEventListener("click", flipCard);
+    $("btnKnow").addEventListener("click", () => markWord("known"));
+    $("btnUnknown").addEventListener("click", () => markWord("unknown"));
+    $("btnShuffle").addEventListener("click", shuffleAndRestart);
+    $("btnReview").addEventListener("click", startReview);
+    $("btnReset").addEventListener("click", resetAll);
+    $("btnReviewFinish").addEventListener("click", startReview);
+    $("btnRestart").addEventListener("click", shuffleAndRestart);
+
+    // 键盘快捷键
+    document.addEventListener("keydown", (e) => {
+      if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
+      switch (e.key) {
+        case " ": case "f": case "F": e.preventDefault(); flipCard(); break;
+        case "ArrowRight": case "k": case "K": markWord("known"); break;
+        case "ArrowLeft": case "u": case "U": markWord("unknown"); break;
+      }
+    });
+
+    // 初始化
+    initStatuses();
+    buildQueue(WORDS.map((_, i) => i));
+    renderCard();
+
+    /* ========== 小怪物 & 像素爆炸 ========== */
+
+    const monsterLayer = $("monsterLayer");
+    const fxCanvas = $("fxCanvas");
+    const fxCtx = fxCanvas.getContext("2d");
+
+    // 像素精灵：数字代表调色板索引，-1 为透明
+    const SPRITES = [
+      {
+        name: "slime",
+        grid: [
+          [-1,-1,0,0,0,0,-1,-1],
+          [-1,0,0,1,1,0,0,-1],
+          [0,0,1,2,2,1,0,0],
+          [0,1,2,2,2,2,1,0],
+          [0,1,2,3,3,2,1,0],
+          [0,0,1,2,2,1,0,0],
+          [-1,0,0,0,0,0,0,-1],
+          [-1,-1,0,0,0,0,-1,-1]
+        ],
+        palette: ["#10b981", "#059669", "#34d399", "#fff"]
+      },
+      {
+        name: "bat",
+        grid: [
+          [0,-1,-1,-1,-1,-1,-1,0],
+          [1,0,-1,-1,-1,-1,0,1],
+          [1,1,0,2,2,0,1,1],
+          [-1,1,2,3,3,2,1,-1],
+          [-1,-1,2,2,2,2,-1,-1],
+          [-1,-1,1,2,2,1,-1,-1],
+          [-1,-1,-1,1,1,-1,-1,-1],
+          [-1,-1,-1,-1,-1,-1,-1,-1]
+        ],
+        palette: ["#a855f7", "#7c3aed", "#c084fc", "#fef08a"]
+      },
+      {
+        name: "ghost",
+        grid: [
+          [-1,-1,0,0,0,0,-1,-1],
+          [-1,0,1,1,1,1,0,-1],
+          [0,1,2,3,3,2,1,0],
+          [0,1,2,2,2,2,1,0],
+          [0,1,2,2,2,2,1,0],
+          [0,1,1,1,1,1,1,0],
+          [0,1,0,1,1,0,1,0],
+          [0,0,0,0,0,0,0,0]
+        ],
+        palette: ["#00d4ff", "#0891b2", "#67e8f9", "#0a0e17"]
+      },
+      {
+        name: "imp",
+        grid: [
+          [-1,-1,0,0,0,0,-1,-1],
+          [-1,0,1,0,0,1,0,-1],
+          [0,1,2,2,2,2,1,0],
+          [0,1,2,3,3,2,1,0],
+          [0,0,1,2,2,1,0,0],
+          [0,1,0,1,1,0,1,0],
+          [0,1,-1,0,0,-1,1,0],
+          [0,0,-1,-1,-1,-1,0,0]
+        ],
+        palette: ["#f97316", "#ea580c", "#fdba74", "#fff"]
+      },
+      {
+        name: "eye",
+        grid: [
+          [-1,-1,-1,0,0,-1,-1,-1],
+          [-1,-1,0,1,1,0,-1,-1],
+          [-1,0,1,2,2,1,0,-1],
+          [0,1,2,3,3,2,1,0],
+          [0,1,2,3,3,2,1,0],
+          [-1,0,1,2,2,1,0,-1],
+          [-1,-1,0,1,1,0,-1,-1],
+          [-1,-1,-1,0,0,-1,-1,-1]
+        ],
+        palette: ["#ef4444", "#b91c1c", "#fca5a5", "#fef08a"]
+      }
+    ];
+
+    const monsters = [];
+    let particles = [];
+    let spawnTimer = 0;
+    const PIXEL = 4;
+    const MONSTER_SIZE = 8 * PIXEL;
+
+    function resizeFxCanvas() {
+      fxCanvas.width = window.innerWidth;
+      fxCanvas.height = window.innerHeight;
+    }
+    resizeFxCanvas();
+    window.addEventListener("resize", resizeFxCanvas);
+
+    // 计算左右两侧可活动区域（避开中间背词区）
+    function getSideZones() {
+      const contentW = Math.min(720, window.innerWidth - 40);
+      const margin = (window.innerWidth - contentW) / 2;
+      if (margin < 70) return null;
+      const pad = 16;
+      return {
+        left:  { x: pad, y: pad, w: margin - pad * 2, h: window.innerHeight - pad * 2 },
+        right: { x: window.innerWidth - margin + pad, y: pad, w: margin - pad * 2, h: window.innerHeight - pad * 2 }
+      };
+    }
+
+    function drawSpriteToCanvas(sprite, scale) {
+      const c = document.createElement("canvas");
+      const size = sprite.grid.length;
+      c.width = size * scale;
+      c.height = size * scale;
+      const ctx = c.getContext("2d");
+      sprite.grid.forEach((row, y) => {
+        row.forEach((idx, x) => {
+          if (idx >= 0) {
+            ctx.fillStyle = sprite.palette[idx];
+            ctx.fillRect(x * scale, y * scale, scale, scale);
+          }
+        });
+      });
+      return c;
+    }
+
+    function createMonster(side) {
+      const zones = getSideZones();
+      if (!zones) return null;
+
+      const zone = zones[side];
+      const sprite = SPRITES[Math.floor(Math.random() * SPRITES.length)];
+      const canvas = drawSpriteToCanvas(sprite, PIXEL);
+
+      const el = document.createElement("div");
+      el.className = "pixel-monster";
+      el.appendChild(canvas);
+      el.dataset.side = side;
+
+      const x = zone.x + Math.random() * (zone.w - MONSTER_SIZE);
+      const y = zone.y + Math.random() * (zone.h - MONSTER_SIZE);
+      const speed = 0.4 + Math.random() * 0.8;
+      const angle = Math.random() * Math.PI * 2;
+
+      const m = {
+        el, side, sprite, canvas,
+        x, y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        wobble: Math.random() * Math.PI * 2,
+        wobbleSpeed: 0.03 + Math.random() * 0.04,
+        nextTurn: performance.now() + 1500 + Math.random() * 3000,
+        alive: true
+      };
+
+      el.style.left = x + "px";
+      el.style.top = y + "px";
+      el.addEventListener("click", (e) => {
+        e.stopPropagation();
+        explodeMonster(m, e.clientX, e.clientY);
+      });
+
+      monsterLayer.appendChild(el);
+      monsters.push(m);
+      return m;
+    }
+
+    function explodeMonster(m, cx, cy) {
+      if (!m.alive) return;
+      m.alive = false;
+      m.el.classList.add("dying");
+
+      const rect = m.el.getBoundingClientRect();
+      const centerX = cx ?? rect.left + rect.width / 2;
+      const centerY = cy ?? rect.top + rect.height / 2;
+
+      // 从精灵采样像素颜色，生成爆炸粒子
+      const grid = m.sprite.grid;
+      const pal = m.sprite.palette;
+      const scale = PIXEL;
+      const cols = [];
+
+      grid.forEach((row, gy) => {
+        row.forEach((idx, gx) => {
+          if (idx >= 0) {
+            const px = centerX - (grid.length * scale) / 2 + gx * scale + scale / 2;
+            const py = centerY - (grid.length * scale) / 2 + gy * scale + scale / 2;
+            const angle = Math.random() * Math.PI * 2;
+            const spd = 2 + Math.random() * 6;
+            cols.push({
+              x: px, y: py,
+              vx: Math.cos(angle) * spd,
+              vy: Math.sin(angle) * spd - 1,
+              color: pal[idx],
+              size: scale * (0.6 + Math.random() * 0.6),
+              life: 1,
+              decay: 0.012 + Math.random() * 0.018,
+              gravity: 0.08 + Math.random() * 0.06
+            });
+          }
+        });
+      });
+
+      // 额外散射像素增强爆炸感
+      for (let i = 0; i < 24; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const spd = 3 + Math.random() * 8;
+        cols.push({
+          x: centerX, y: centerY,
+          vx: Math.cos(angle) * spd,
+          vy: Math.sin(angle) * spd - 2,
+          color: pal[Math.floor(Math.random() * pal.length)],
+          size: PIXEL * (0.5 + Math.random()),
+          life: 1,
+          decay: 0.015 + Math.random() * 0.02,
+          gravity: 0.1
+        });
+      }
+
+      particles.push(...cols);
+
+      setTimeout(() => m.el.remove(), 120);
+      const idx = monsters.indexOf(m);
+      if (idx >= 0) monsters.splice(idx, 1);
+
+      scheduleRespawn();
+    }
+
+    let respawnPending = false;
+    function scheduleRespawn() {
+      if (respawnPending) return;
+      respawnPending = true;
+      setTimeout(() => {
+        respawnPending = false;
+        if (window.innerWidth > 900) trySpawnMonster();
+      }, 800 + Math.random() * 1500);
+    }
+
+    function trySpawnMonster() {
+      const zones = getSideZones();
+      if (!zones) return;
+
+      const leftCount = monsters.filter(m => m.side === "left").length;
+      const rightCount = monsters.filter(m => m.side === "right").length;
+      const maxPerSide = 3;
+
+      const candidates = [];
+      if (leftCount < maxPerSide) candidates.push("left");
+      if (rightCount < maxPerSide) candidates.push("right");
+      if (candidates.length === 0) return;
+
+      const side = candidates[Math.floor(Math.random() * candidates.length)];
+      createMonster(side);
+    }
+
+    function updateMonsters(now) {
+      const zones = getSideZones();
+      if (!zones) return;
+
+      monsters.forEach(m => {
+        if (!m.alive) return;
+        const zone = zones[m.side];
+
+        if (now > m.nextTurn) {
+          m.nextTurn = now + 1200 + Math.random() * 2800;
+          const angle = Math.random() * Math.PI * 2;
+          const speed = 0.4 + Math.random() * 0.9;
+          m.vx = Math.cos(angle) * speed;
+          m.vy = Math.sin(angle) * speed;
+        }
+
+        m.x += m.vx;
+        m.y += m.vy;
+        m.wobble += m.wobbleSpeed;
+
+        if (m.x < zone.x) { m.x = zone.x; m.vx = Math.abs(m.vx); }
+        if (m.y < zone.y) { m.y = zone.y; m.vy = Math.abs(m.vy); }
+        if (m.x > zone.x + zone.w - MONSTER_SIZE) { m.x = zone.x + zone.w - MONSTER_SIZE; m.vx = -Math.abs(m.vx); }
+        if (m.y > zone.y + zone.h - MONSTER_SIZE) { m.y = zone.y + zone.h - MONSTER_SIZE; m.vy = -Math.abs(m.vy); }
+
+        const bob = Math.sin(m.wobble) * 3;
+        m.el.style.transform = `translateY(${bob}px)`;
+        m.el.style.left = m.x + "px";
+        m.el.style.top = m.y + "px";
+      });
+    }
+
+    function updateParticles() {
+      fxCtx.clearRect(0, 0, fxCanvas.width, fxCanvas.height);
+
+      particles = particles.filter(p => p.life > 0);
+      particles.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += p.gravity;
+        p.vx *= 0.98;
+        p.life -= p.decay;
+
+        fxCtx.globalAlpha = Math.max(0, p.life);
+        fxCtx.fillStyle = p.color;
+        fxCtx.fillRect(
+          Math.round(p.x - p.size / 2),
+          Math.round(p.y - p.size / 2),
+          Math.round(p.size),
+          Math.round(p.size)
+        );
+      });
+      fxCtx.globalAlpha = 1;
+    }
+
+    function monsterLoop(now) {
+      spawnTimer += 16;
+      if (spawnTimer > 2200) {
+        spawnTimer = 0;
+        trySpawnMonster();
+      }
+      updateMonsters(now);
+      updateParticles();
+      requestAnimationFrame(monsterLoop);
+    }
+
+    function initMonsters() {
+      if (window.innerWidth <= 900) return;
+      createMonster("left");
+      createMonster("right");
+      setTimeout(() => createMonster(Math.random() > 0.5 ? "left" : "right"), 600);
+      requestAnimationFrame(monsterLoop);
+    }
+    initMonsters();
+  </script>
+</body>
+</html>
